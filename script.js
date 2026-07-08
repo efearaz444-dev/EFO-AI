@@ -422,12 +422,13 @@ if (welcomeCore) welcomeCore.classList.add('hidden');
 
     const countdown = setInterval(() => { if (secondsLeft > 1) { secondsLeft--; updateStatus(); } else { clearInterval(countdown); } }, 1000);
 
-    try {
-        const response = await fetch('http://localhost:3000/ask', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: message, chatId: currentChatId, historyMessages: historyMessages }),
-            signal: abortController.signal
-        });
+try {
+    const response = await fetch('/ask', { // <--- 'http://localhost:3000' kısmını sildik
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: message, chatId: currentChatId, historyMessages: historyMessages }),
+        signal: abortController.signal
+    });
 
         clearInterval(countdown); efoMessageDiv.innerHTML = '';
         const reader = response.body.getReader(); const decoder = new TextDecoder('utf-8');
