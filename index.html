@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efo AI</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-box">
+            <h2 class="auth-glitch">EFO AI</h2>
+            <p class="auth-subtitle" id="authSubtitle">Giriş yapın veya yeni hesap oluşturun.</p>
+            
+            <div class="auth-input-group">
+                <input type="text" id="authUsername" placeholder="Kullanıcı Adı">
+                <input type="password" id="authPassword" placeholder="Şifre">
+            </div>
+
+            <div class="auth-buttons">
+                <button id="loginBtn" onclick="handleAuth('login')">Giriş Yap</button>
+                <button id="registerBtn" onclick="handleAuth('register')">Hesap Oluştur</button>
+                <button id="googleFakeBtn" onclick="alert('Google ile giriş sistemi yakında aktif edilecektir reis!')" style="background: rgba(255,255,255,0.03); color: #9ca3af; border: 1px dashed rgba(255,255,255,0.1); width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">
+    🌐 Google ile Devam Et (Yakında)
+</button>
+            </div>
+            <span class="auth-footer">⚠️ Şimdilik yerel sistemle devam et, yakında Google Giriş sistemi aktif!</span>
+        </div>
+    </div>
+
+    <div class="intro-screen" id="introScreen" style="display: none;">
+        <div class="intro-content">
+            <h1 class="glitch">EFO AI</h1>
+            <p class="loading-text">Sistem Yükleniyor...</p>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+        </div>
+    </div>
+
+    <div class="main-container" id="mainContainer" style="display: none;">
+        
+        <div class="sidebar" id="sidebar">
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar(true)">✕</button>
+            <div class="sidebar-logo">
+                <h1>EFO AI</h1>
+                <span style="font-size: 10px; color: var(--neon-purple); letter-spacing: 1px;" id="userBadge">USER: -</span>
+            </div>
+            
+            <button class="new-chat-btn" onclick="createNewChat()">+ YENİ SOHBET</button>
+
+            <input type="text" id="searchChatInput" placeholder="🔍 Sohbetlerde ara..." oninput="filterChats()">
+
+            <div class="history-title">Sohbet Geçmişi</div>
+            <div class="history-list" id="historyList"></div>
+
+            <button class="logout-action-btn" onclick="logout()">🔒 Oturumu Kapat</button>
+        </div>
+
+        <div class="chat-area">
+            <div class="chat-main-content">
+                
+                <div class="chat-header">
+                    <button class="sidebar-open-btn" id="sidebarOpenBtn" onclick="toggleSidebar(false)">☰ Menü</button>
+                    <div class="status-dot"></div>
+                    <div style="flex: 1;">
+                        <h2>EFO AI</h2>
+                        <p>EFO AI Senin Kişisel Asistanın...</p>
+                    </div>
+
+                    <div class="wizard-mode-container">
+                        <label class="switch">
+                            <input type="checkbox" id="wizardModeCheckbox">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="wizard-label">🔮 Kod Sihirbazı</span>
+                    </div>
+                </div>
+
+<div class="chat-box" id="chatBox">
+    <div class="chat-welcome-core" id="chatWelcomeCore">
+        <div class="welcome-logo">🔮</div> 
+        <h1 id="welcomeTitle">Sistem yükleniyor...</h1>
+    </div>
+</div>
+                
+                <div class="chat-input-area">
+                    <button class="image-gen-shortcut" onclick="triggerImagePrompt()" title="Yapay Zeka ile Görsel Oluştur">🎨</button>
+                    <input type="text" id="userInput" placeholder="Efo'ya bir şeyler söyle, belki bir kuş çizimi..." onkeypress="handleKeyPress(event)">
+                    <button id="sendBtn" onclick="sendMessage()">GÖNDER</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

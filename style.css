@@ -1,0 +1,631 @@
+:root {
+    --bg-dark: #0a0a0c;
+    --panel-bg: rgba(16, 16, 20, 0.75);
+    --neon-purple: #bc13fe;
+    --neon-glow: rgba(188, 19, 254, 0.3);
+    --text-main: #e2e8f0;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#bgCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* --- AÇILIŞ EKRANI ANIMASYONU --- */
+.intro-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #050507;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 1s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.5s;
+}
+.intro-screen.fade-away {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+.intro-content { text-align: center; }
+.glitch {
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: 5px;
+    color: #fff;
+    text-shadow: 0 0 10px var(--neon-purple);
+    margin-bottom: 5px;
+    animation: pulse 2s infinite;
+}
+.loading-text { color: #888; font-size: 14px; letter-spacing: 2px; }
+.progress-bar {
+    width: 200px;
+    height: 3px;
+    background: #15151a;
+    margin: 15px auto 0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--neon-purple);
+    box-shadow: 0 0 8px var(--neon-purple);
+    animation: load 2.3s ease-in-out;
+}
+
+/* --- ANA ARAYÜZ (TAM EKRAN) --- */
+.main-container {
+    position: relative;
+    z-index: 2;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.4) 100%);
+}
+
+.chat-wrapper {
+    width: 85%;
+    max-width: 900px;
+    height: 80vh;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(188, 19, 254, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(188, 19, 254, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-header {
+    padding: 20px 25px;
+    background: rgba(22, 22, 28, 0.6);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.chat-header h2 { margin: 0; font-size: 18px; letter-spacing: 1px; color: #fff; }
+.chat-header p { margin: 3px 0 0 0; font-size: 11px; color: #6b7280; text-transform: uppercase; }
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #00ff66;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00ff66;
+}
+
+.chat-box {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+/* Scrollbar Güzelleştirme */
+.chat-box::-webkit-scrollbar { width: 5px; }
+.chat-box::-webkit-scrollbar-thumb { background: rgba(188, 19, 254, 0.3); border-radius: 10px; }
+
+.message {
+    padding: 14px 20px;
+    border-radius: 14px;
+    max-width: 70%;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: msgIn 0.3s ease-out;
+}
+.efo {
+    background: rgba(30, 30, 40, 0.4);
+    color: #f1f5f9;
+    align-self: flex-start;
+    border: 1px solid rgba(255,255,255,0.03);
+    border-left: 3px solid var(--neon-purple);
+}
+.user {
+    background: linear-gradient(135deg, var(--neon-purple), #7e0cb3);
+    color: white;
+    align-self: flex-end;
+    box-shadow: 0 4px 15px var(--neon-glow);
+}
+
+.chat-input-area {
+    display: flex;
+    padding: 20px 25px;
+    background: rgba(18, 18, 24, 0.8);
+    gap: 15px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.chat-input-area input {
+    flex: 1;
+    padding: 14px;
+    background: #0d0d11;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: white;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    transition: 0.3s;
+}
+.chat-input-area input:focus {
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 10px var(--neon-glow);
+}
+.chat-input-area button {
+    background: transparent;
+    color: var(--neon-purple);
+    border: 1px solid var(--neon-purple);
+    padding: 0 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: 0.3s;
+}
+.chat-input-area button:hover {
+    background: var(--neon-purple);
+    color: white;
+    box-shadow: 0 0 15px var(--neon-glow);
+}
+
+/* --- ANIMASYONLAR --- */
+@keyframes load { 0% { width: 0%; } 100% { width: 100%; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+@keyframes msgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* --- HTML'DEN AYRILAN PREMIUM TASARIM STİLLERİ --- */
+:root {
+    --sidebar-width: 280px;
+}
+body {
+    font-size: 16px;
+    line-height: 1.6;
+    overflow: hidden;
+}
+.main-container { width: 100vw; height: 100vh; display: flex; position: relative; overflow: hidden; }
+
+/* GİZLENEBİLİR SIDEBAR TASARIMI */
+.sidebar { 
+    width: var(--sidebar-width); 
+    min-width: var(--sidebar-width);
+    background: rgba(12, 12, 16, 0.98); 
+    border-right: 1px solid rgba(188, 19, 254, 0.15); 
+    padding: 25px 20px; 
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 10;
+}
+.sidebar.collapsed {
+    margin-left: calc(-1 * var(--sidebar-width) - 40px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* PANEL KAPATMA VE AÇMA BUTONLARI */
+.sidebar-toggle-btn {
+    position: absolute; right: 15px; top: 25px;
+    background: transparent; border: none; color: #6b7280;
+    cursor: pointer; font-size: 18px; transition: 0.2s;
+}
+.sidebar-toggle-btn:hover { color: var(--neon-purple); transform: scale(1.1); }
+
+/* MENÜ BUTONU VE BAŞLIK HİZALAMA DÜZELTMESİ */
+.sidebar-open-btn {
+    position: static;
+    background: rgba(188, 19, 254, 0.1); 
+    border: 1px solid rgba(188, 19, 254, 0.3);
+    color: #fff; 
+    padding: 10px 16px; 
+    border-radius: 6px; 
+    cursor: pointer;
+    font-size: 14px; 
+    transition: 0.2s; 
+    display: none;
+    margin-right: 20px;
+    white-space: nowrap;
+}
+.sidebar-open-btn:hover { 
+    background: rgba(188, 19, 254, 0.2); 
+    box-shadow: 0 0 15px var(--neon-purple); 
+}
+
+.chat-area { flex: 1; background: transparent; height: 100vh; position: relative; transition: all 0.3s ease; }
+.chat-main-content { display: flex; flex-direction: column; height: 100vh; }
+
+.sidebar-logo { text-align: left; padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.sidebar-logo h1 { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--neon-purple); margin: 0; letter-spacing: 3px; }
+
+.new-chat-btn {
+    width: 100%; background: linear-gradient(135deg, var(--neon-purple), #7e0cb3); color: white; border: none;
+    padding: 14px; border-radius: 8px; margin-top: 20px; font-weight: bold; cursor: pointer; letter-spacing: 1px;
+    font-size: 14px; transition: 0.3s; box-shadow: 0 4px 15px rgba(188, 19, 254, 0.2);
+}
+.new-chat-btn:hover { box-shadow: 0 0 20px var(--neon-glow); transform: translateY(-1px); }
+
+.history-title { font-size: 11px; text-transform: uppercase; color: #6b7280; margin-top: 30px; margin-bottom: 15px; letter-spacing: 1px; }
+.history-list { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+.history-item-wrapper { position: relative; display: flex; align-items: center; }
+.history-item { 
+    flex: 1; padding: 12px 40px 12px 15px; background: rgba(255, 255, 255, 0.02); border-left: 2px solid transparent; 
+    border-radius: 6px; font-size: 14px; color: #cbd5e1; cursor: pointer; transition: 0.2s;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.history-item:hover { background: rgba(188, 19, 254, 0.05); color: #fff; }
+.history-item.active { background: rgba(188, 19, 254, 0.1); border-left-color: var(--neon-purple); color: #fff; font-weight: bold; }
+
+.delete-chat-btn {
+    position: absolute; right: 10px; background: transparent; border: none; color: #ef4444; 
+    cursor: pointer; opacity: 0; transition: 0.2s; font-size: 14px; padding: 5px;
+}
+.history-item-wrapper:hover .delete-chat-btn { opacity: 1; }
+
+/* CHAT HEADER FLEX YAPISI */
+.chat-header { 
+    padding: 20px 30px; 
+    display: flex; 
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(10, 10, 14, 0.4);
+}
+.status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 12px; box-shadow: 0 0 10px #22c55e; }
+.chat-header h2 { font-size: 16px; margin: 0; color: #fff; font-weight: 800; letter-spacing: 1px; }
+.chat-header p { font-size: 11px; margin: 3px 0 0 0; color: #6b7280; text-transform: uppercase; }
+
+/* MESAJ ALANI OKUMA RAHATLIĞI */
+.message { font-size: 16px; padding: 18px 22px; line-height: 1.65; max-width: 85%; margin-bottom: 15px; border-radius: 8px; }
+.message.user { background: rgba(188, 19, 254, 0.15); border: 1px solid rgba(188, 19, 254, 0.3); margin-left: auto; color: #fff; }
+.message.efo { background: rgba(20, 20, 25, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); margin-right: auto; color: #e2e8f0; }
+
+/* SAYAÇLI YÜKLENİYOR ANIMASYONU */
+.efo-typing-pulse { display: inline-flex; gap: 8px; padding: 5px 10px; align-items: center; font-size: 14px; color: #a3a3a3; }
+.typing-dot { width: 6px; height: 6px; background-color: var(--neon-purple); border-radius: 50%; animation: pulseDot 1.4s infinite ease-in-out both; }
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes pulseDot { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px var(--neon-purple); } }
+
+/* KOD BLOKLARI VE KOPYALA BUTONU */
+.code-block-container {
+    position: relative; margin: 15px 0; background: #0e0e12; 
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; overflow: hidden;
+}
+.code-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #16161e; padding: 8px 16px; font-size: 12px;
+    color: #9ca3af; font-family: monospace; text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.copy-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer;
+    font-size: 11px; font-family: sans-serif; transition: 0.2s;
+}
+.copy-btn:hover { background: var(--neon-purple); color: white; border-color: transparent; }
+.code-block-container pre { margin: 0; padding: 16px; overflow-x: auto; font-family: 'Fira Code', 'Courier New', monospace; font-size: 14px; color: #e2e8f0; }
+
+.message p { margin: 0 0 12px 0; }
+.message p:last-child { margin-bottom: 0; }
+.message ul, .message ol { margin: 8px 0 12px 24px; padding: 0; }
+.message li { margin-bottom: 6px; }
+.message h1, .message h2, .message h3 { color: #fff; font-size: 18px; margin: 18px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+/* SOHBET ARAMA KUTUSU */
+#searchChatInput {
+    width: 100%;
+    box-sizing: border-box; /* Padding ve border'ı genişliğe dahil eder, taşmayı önler */
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(188, 19, 254, 0.3);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s ease;
+    margin-bottom: 15px; /* Altındaki başlıkla yapışmasın diye kibar bir boşluk */
+}
+
+#searchChatInput:focus {
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 10px var(--neon-purple-glow);
+}
+
+/* KOD SİHİRBAZI SWITCH BUTONU */
+.wizard-mode-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.wizard-label {
+    font-size: 13px;
+    color: #cbd5e1;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(188, 19, 254, 0.5);
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #334155; transition: .3s; border-radius: 22px;
+}
+.slider:before {
+    position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+    background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--neon-purple); box-shadow: 0 0 10px var(--neon-purple); }
+input:checked + .slider:before { transform: translateX(18px); }
+
+/* SİBER SES İKONU (ÇOCUKSU DÜĞME YERİNE) */
+.siber-audio-btn {
+    background: transparent;
+    border: none;
+    color: var(--neon-purple);
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin-top: 6px;
+    border: 1px solid var(--neon-purple);
+    box-shadow: 0 0 5px var(--neon-purple-glow);
+    transition: all 0.3s ease;
+}
+
+.siber-audio-btn:hover {
+    background: var(--neon-purple);
+    color: #fff;
+    box-shadow: 0 0 12px var(--neon-purple);
+    transform: scale(1.1);
+}
+
+/* KOD SİHİRBAZI AÇIKKEN GİRİŞ PANELİNDEKİ YEŞİL GLITCH AYARI */
+:root {
+    --neon-purple: #bc13fe;
+    --neon-purple-glow: rgba(188, 19, 254, 0.5);
+}
+
+/* Mevcut CSS dosyandaki renk kodları yerine var(--neon-purple) kullanırsan renk geçişi kusursuz olur reisim */
+/* --- GİRİŞ PANELİ TASARIMI (AUTH SCREEN) --- */
+.auth-screen {
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    background: #060608; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 9999;
+}
+.auth-box {
+    background: rgba(12, 12, 16, 0.95);
+    border: 1px solid var(--neon-purple);
+    box-shadow: 0 0 30px var(--neon-purple-glow);
+    padding: 40px; 
+    border-radius: 12px; 
+    width: 400px; 
+    text-align: center;
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px;
+}
+.auth-glitch {
+    font-size: 28px; 
+    font-weight: 900; 
+    color: #fff; 
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px var(--neon-purple); 
+    margin: 0;
+}
+.auth-subtitle { 
+    font-size: 13px; 
+    color: #6b7280; 
+    margin: 0; 
+}
+.auth-input-group { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+}
+.auth-input-group input {
+    background: rgba(255,255,255,0.02); 
+    border: 1px solid rgba(188, 19, 254, 0.3);
+    padding: 14px; 
+    border-radius: 6px; 
+    color: #fff; 
+    font-size: 14px; 
+    outline: none; 
+    transition: 0.2s;
+}
+.auth-input-group input:focus { 
+    border-color: var(--neon-purple); 
+    box-shadow: 0 0 10px var(--neon-purple-glow); 
+}
+.auth-buttons { 
+    display: flex; 
+    gap: 10px; 
+}
+.auth-buttons button {
+    flex: 1; 
+    padding: 12px; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: 0.2s; 
+    font-size: 14px;
+}
+#loginBtn { 
+    background: linear-gradient(135deg, var(--neon-purple), #7e0cb3); 
+    color: white; 
+    border: none; 
+}
+#loginBtn:hover { 
+    box-shadow: 0 0 15px var(--neon-purple); 
+}
+#registerBtn { 
+    background: transparent; 
+    border: 1px solid #6b7280; 
+    color: #cbd5e1; 
+}
+#registerBtn:hover { 
+    border-color: #fff; 
+    color: #fff; 
+}
+.auth-footer { 
+    font-size: 10px; 
+    color: #4b5563; 
+    margin-top: 10px; 
+    display: block; 
+    line-height: 1.4; 
+}
+
+/* SİDEBAR ÇIKIŞ YAP BUTONU */
+.logout-action-btn {
+    background: rgba(239, 68, 68, 0.1); 
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444; 
+    padding: 10px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    margin-top: auto;
+    font-weight: bold; 
+    font-size: 12px; 
+    transition: 0.2s;
+}
+.logout-action-btn:hover { 
+    background: #ef4444; 
+    color: white; 
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); 
+}
+
+/* GÖRSEL OLUŞTURMA KISAYOL İKONU */
+.image-gen-shortcut {
+    background: transparent; 
+    border: none; 
+    font-size: 20px; 
+    cursor: pointer;
+    padding: 0 10px; 
+    transition: 0.2s; 
+    display: flex; 
+    align-items: center;
+}
+.image-gen-shortcut:hover { 
+    transform: scale(1.2); 
+}
+
+/* SOHBET İÇİ RESİM ÇERÇEVESİ */
+.chat-generated-image {
+    max-width: 100%; 
+    border-radius: 8px; 
+    border: 1px solid var(--neon-purple);
+    box-shadow: 0 0 15px var(--neon-purple-glow); 
+    margin-top: 10px; 
+    display: block;
+}
+.image-download-btn {
+    background: #1e293b; 
+    color: #fff; 
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 12px; 
+    border-radius: 4px; 
+    font-size: 12px; 
+    cursor: pointer;
+    margin-top: 8px; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 5px; 
+    transition: 0.2s;
+}
+.image-download-btn:hover { 
+    background: var(--neon-purple); 
+    border-color: transparent; 
+    color: #fff;
+}
+/* SOHBET ORTASINDAKİ LOGO VE BAŞLIK TASARIMI */
+.chat-welcome-core {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 80%;
+    max-width: 600px;
+    pointer-events: none; /* Arkadaki parçacıklara veya tıklamalara engel olmasın */
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* YENİ LOGO RESMİ STİLİ VE PARLAMA EFEKTİ */
+.welcome-logo-img {
+    width: 100px; /* Logonun büyüklüğünü buradan keyfine göre ayarlayabilirsin reis */
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 25px var(--neon-purple)); /* Logona fütüristik mor/yeşil parlama verir */
+    animation: siberPulse 3s infinite ease-in-out;
+    margin-bottom: 10px;
+}
+
+.chat-welcome-core h1 {
+    font-size: 26px;
+    font-weight: 600;
+    color: #e2e8f0;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    margin: 0;
+}
+
+/* İlk mesaj atıldığında tetiklenecek gizlenme efekti */
+.chat-welcome-core.hidden {
+    opacity: 0;
+    transform: translate(-50%, -60%) scale(0.95);
+    pointer-events: none;
+}
+
+@keyframes siberPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px var(--neon-purple)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 35px var(--neon-purple)); }
+}
+/* Animasyonun kendisi */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Yazıların sınıfı (örneğin: .chat-message) */
+.chat-message {
+    animation: fadeIn 0.8s ease-out forwards;
+}
