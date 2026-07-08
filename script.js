@@ -407,7 +407,7 @@ sendBtn.onclick = stopGeneration;
 conversations[currentChatId].messages.push({ sender: 'user', text: message });
 
 // Token limitine takılmamak için sadece son 6 mesajı gönderiyoruz
-const historyMessages = conversations[currentChatId].messages.slice(-6); 
+const historyMessages = conversations[currentChatId].messages.slice(-3); 
 
 if (conversations[currentChatId].title === "Yeni Sohbet") {
     conversations[currentChatId].title = "🤖 Düşünüyor..."; 
