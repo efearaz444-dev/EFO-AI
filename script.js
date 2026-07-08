@@ -457,7 +457,7 @@ try {
 
         clearInterval(countdown); efoMessageDiv.innerHTML = '';
         const reader = response.body.getReader(); const decoder = new TextDecoder('utf-8');
-        let fullResponseText = '';
+        let fullResponseText = "";
 
         while (true) {
             const { done, value } = await reader.read(); if (done) break;
