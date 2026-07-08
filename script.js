@@ -392,24 +392,49 @@ if (welcomeCore) welcomeCore.classList.add('hidden');
     }
 
     // B) STANDART VE KOD SİHİRBAZI MODU (HAFIZALI)
-    const isWizardMode = document.getElementById('wizardModeCheckbox').checked;
-    if (isWizardMode) {
-        message = "[KOD SİHİRBAZI AKTİF] Aşağıdaki kodu incele, hataları düzelt, optimize et ve en temiz halini sun: \n" + message;
-    }
+const isWizardMode = document.getElementById('wizardModeCheckbox').checked;
+if (isWizardMode) {
+    message = "[KOD SİHİRBAZI AKTİF] Aşağıdaki kodu incele, hataları düzelt, optimize et ve en temiz halini sun: \n" + message;
+}
 
-    isGenerating = true; abortController = new AbortController();
-    sendBtn.innerText = "DURDUR"; sendBtn.style.background = "#ef4444"; sendBtn.onclick = stopGeneration;
+isGenerating = true; 
+abortController = new AbortController();
+sendBtn.innerText = "DURDUR"; 
+sendBtn.style.background = "#ef4444"; 
+sendBtn.onclick = stopGeneration;
 
-    const historyMessages = [...conversations[currentChatId].messages];
-    conversations[currentChatId].messages.push({ sender: 'user', text: message });
+// Mesajı geçmişe ekle
+conversations[currentChatId].messages.push({ sender: 'user', text: message });
+
+// Token limitine takılmamak için sadece son 6 mesajı gönderiyoruz
+const historyMessages = conversations[currentChatId].messages.slice(-6); 
+
+if (conversations[currentChatId].title === "Yeni Sohbet") {
+    conversations[currentChatId].title = "🤖 Düşünüyor..."; 
+    renderHistoryList();
     
-    if (conversations[currentChatId].title === "Yeni Sohbet") {
-        conversations[currentChatId].title = "🤖 Düşünüyor..."; renderHistoryList();
-        fetch('http://localhost:3000/generate-title', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: message })
-        }).then(res => res.json()).then(data => { if(conversations[currentChatId]) { conversations[currentChatId].title = data.title; saveToStorage(); renderHistoryList(); } });
-    }
+    // localhost hatasını düzelttik, artık canlı sitede çalışır
+    fetch('/generate-title', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: message }) 
+    })
+    .then(res => res.json())
+    .then(data => { 
+        if(conversations[currentChatId]) { 
+            conversations[currentChatId].title = data.title || "Yeni Sohbet"; 
+            saveToStorage(); 
+            renderHistoryList(); 
+        } 
+    })
+    .catch(err => {
+        console.error("Başlık oluşturma hatası:", err);
+        if(conversations[currentChatId]) {
+            conversations[currentChatId].title = "Sohbet"; // Hata olursa başlığı düzelt
+            renderHistoryList();
+        }
+    });
+}
 
     chatBox.innerHTML += `<div class="message user">${message}</div>`; input.value = ''; chatBox.scrollTop = chatBox.scrollHeight;
 
