@@ -468,7 +468,14 @@ while (true) {
         }
 
         // Döngü bittiğinde hafızaya kaydet ve ses butonunu çak:
-        conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText }); saveToStorage();
+conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText }); 
+
+        // Hafıza temizliği burada devreye giriyor loriğim:
+        if (conversations[currentChatId].messages.length > 4) {
+            conversations[currentChatId].messages = conversations[currentChatId].messages.slice(-4);
+        }
+
+        saveToStorage();
         const escapedText = fullResponseText.replace(/'/g, "\\'").replace(/\n/g, " ");
         efoMessageDiv.innerHTML += `<button class="siber-audio-btn" onclick="speakText(this, '${escapedText}')" title="Sesli Oynat">⚡</button>`;
 
