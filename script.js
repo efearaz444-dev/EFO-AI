@@ -447,6 +447,8 @@ if (conversations[currentChatId].title === "Yeni Sohbet") {
 
     const countdown = setInterval(() => { if (secondsLeft > 1) { secondsLeft--; updateStatus(); } else { clearInterval(countdown); } }, 1000);
 
+    let fullResponseText = "";
+
 try {
     const response = await fetch('/ask', { // <--- 'http://localhost:3000' kısmını sildik
         method: 'POST', 
@@ -457,15 +459,15 @@ try {
 
         clearInterval(countdown); efoMessageDiv.innerHTML = '';
         const reader = response.body.getReader(); const decoder = new TextDecoder('utf-8');
-        let fullResponseText = "";
 
-        while (true) {
+while (true) {
             const { done, value } = await reader.read(); if (done) break;
             fullResponseText += decoder.decode(value, { stream: true });
             efoMessageDiv.innerHTML = marked.parse(fullResponseText);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
+        // Döngü bittiğinde hafızaya kaydet ve ses butonunu çak:
         conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText }); saveToStorage();
         const escapedText = fullResponseText.replace(/'/g, "\\'").replace(/\n/g, " ");
         efoMessageDiv.innerHTML += `<button class="siber-audio-btn" onclick="speakText(this, '${escapedText}')" title="Sesli Oynat">⚡</button>`;
