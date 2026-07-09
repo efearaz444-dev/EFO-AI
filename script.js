@@ -647,37 +647,35 @@ if (downloadMobile) {
 document.addEventListener("DOMContentLoaded", function() {
     const desktopBtn = document.getElementById('downloadDesktopBtn');
     const appBtn = document.getElementById('downloadAppBtn');
-    const downloadModal = document.querySelector('.modal'); // Eğer açılır pencerenin class adı farklıysa burayı kontrol edebilirsin reis
+    
+    // Güvenli modal seçici: Eğer projende .modal class'ı yoksa kod patlamaz
+    const downloadModal = document.querySelector('.modal') || document.querySelector('.download-modal'); 
     
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isMobileText = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
 
-    // 1. Durum: Eğer kullanıcı Efo AI Mobil Uygulamasının KENDİ İÇİNDEN giriyorsa
+    // 1. Durum: Efo AI Mobil Uygulamasının KENDİ İÇİNDEN giriliyorsa her şeyi gizle
     if (userAgent.includes("WebInToApp") || window.location.href.includes("app=true")) {
-        if (appBtn) appBtn.style.display = 'none';
-        if (desktopBtn) desktopBtn.style.display = 'none';
-        if (downloadModal) downloadModal.style.display = 'none';
+        if (appBtn) appBtn.style.setProperty('display', 'none', 'important');
+        if (desktopBtn) desktopBtn.style.setProperty('display', 'none', 'important');
+        if (downloadModal) downloadModal.style.setProperty('display', 'none', 'important');
     } 
-    // 2. Durum: Kullanıcı normal telefondan tarayıcıyla giriyorsa (Chrome/Safari vb.)
-    else if (isMobileText) {
-        if (desktopBtn) desktopBtn.style.display = 'none';  // PC butonunu gizle
-        if (appBtn) appBtn.style.display = 'inline-block'; // Mobil butonunu kesin olarak göster
+    // 2. Durum: Kullanıcı normal TELEFONDAN tarayıcıyla giriyorsa
+    else if (isMobile) {
+        if (desktopBtn) desktopBtn.style.setProperty('display', 'none', 'important'); // PC'yi gizle
+        if (appBtn) appBtn.style.setProperty('display', 'inline-block', 'important'); // Mobili zorla göster
     } 
-    // 3. Durum: Kullanıcı PC'den normal tarayıcıyla giriyorsa
+    // 3. Durum: Kullanıcı PC'DEN normal tarayıcıyla giriyorsa
     else {
-        if (appBtn) appBtn.style.display = 'none';          // Mobil butonunu gizle
-        if (desktopBtn) desktopBtn.style.display = 'inline-block'; // PC butonunu kesin olarak göster
+        if (appBtn) appBtn.style.setProperty('display', 'none', 'important'); // Mobili gizle
+        if (desktopBtn) desktopBtn.style.setProperty('display', 'inline-block', 'important'); // PC'yi zorla göster
         
         // 🖥️ PC İÇİN OTOMATİK TAM EKRAN PROTOKOLÜ
         document.addEventListener('click', function activateFullscreen() {
             const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
-            }
+            if (elem.requestFullscreen) elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
             document.removeEventListener('click', activateFullscreen);
         }, { once: true });
     }
