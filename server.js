@@ -62,7 +62,7 @@ app.post('/ask', async (req, res) => {
     // --- SİBER HAFIZA FİLTRESİ (TOKEN SAVAR) ---
     let filteredHistory = historyMessages || [];
     if (filteredHistory.length > 4) {
-        console.log(`⚠️ [SİTEM]: Geçmiş mesaj sayısı ${filteredHistory.length}. Son 4 mesaj filtrelenerek hafızaya alınıyor.`);
+        console.log(`⚠️ [SİSTEM]: Geçmiş mesaj sayısı ${filteredHistory.length}. Son 4 mesaj filtrelenerek hafızaya alınıyor.`);
         filteredHistory = filteredHistory.slice(-4);
     }
 
@@ -80,14 +80,22 @@ app.post('/ask', async (req, res) => {
     apiMessages.push({ role: "user", content: prompt });
 
     let attempt = 0;
-    let maxAttempts = 5; // Limite takılırsa ardışık en fazla 5 farklı anahtarla denesin
+    let maxAttempts = groqApiKeys.length > 0 ? groqApiKeys.length : 5; // Kaç anahtar varsa o kadar denesin
     let success = false;
     let response;
 
     while (attempt < maxAttempts && !success) {
-        let currentApiKey = groqApiKeys[currentKeyIndex] || process.env.GROQ_API_KEY;
+        let currentApiKey = groqApiKeys.length > 0 ? groqApiKeys[currentKeyIndex] : process.env.GROQ_API_KEY;
+
+        if (!currentApiKey) {
+            console.error("🚨 [KRİTİK HATA]: Sistemde aktif API anahtarı bulunamadı, sonraki deneniyor.");
+            rotateGroqKey();
+            attempt++;
+            continue;
+        }
 
         try {
+            // Önce şansımızı ana modelle (EFO+) deniyoruz
             response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -104,18 +112,14 @@ app.post('/ask', async (req, res) => {
                 })
             });
 
-            // Eğer ana model rate limit yediyse yedek modele (EFO-LİTE) geçmeye çalış
+            // Eğer ana model limitten dolayı patlarsa:
             if (!response.ok) {
                 const errText = await response.text();
                 
                 if (errText.includes('rate_limit_exceeded') || response.status === 429) {
                     console.warn(`⚠️ [SİSTEM UYARISI]: Ana model sınırı aşıldı (Anahtar İndex: ${currentKeyIndex}). EFO-LİTE deneniyor.`);
                     
-                    if (apiMessages.length <= 2) {
-                        res.write(`⚡ **[EFO-LİTE]:** EFO+ sınırına ulaşıldı. EFO-LİTE devrede.\n\n---\n\n`);
-                    }
-                    
-                    // Yedek model (EFO-LİTE) isteği
+                    // Yedek model (EFO-LİTE) isteği fırlatıyoruz
                     response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                         method: 'POST',
                         headers: {
@@ -123,7 +127,7 @@ app.post('/ask', async (req, res) => {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            model: "llama-3.1-8b-instant", // EFO-LİTE Modeli
+                            model: "llama-3.1-8b-instant",
                             messages: apiMessages,
                             temperature: 0.2,
                             top_p: 0.9,
@@ -132,7 +136,7 @@ app.post('/ask', async (req, res) => {
                         })
                     });
 
-                    // Eğer yedek model de rate limit yediyse hatayı fırlat ki catch bloğu anahtarı değiştirip while döngüsünü döndürsün
+                    // Eğer yedek model de limitten patlarsa, bu anahtar tamamen felç olmuştur. Hata fırlat ki catch bloğuna düşüp anahtar değiştirsin!
                     if (!response.ok) {
                         const backupErrText = await response.text();
                         if (backupErrText.includes('rate_limit_exceeded') || response.status === 429) {
@@ -146,11 +150,13 @@ app.post('/ask', async (req, res) => {
                 }
             }
 
-            success = true; // İstek başarılıysa döngüyü kır
+            // Buraya gelebildiyse ya ana model ya da yedek model başarıyla cevap vermeye başlamıştır!
+            success = true; 
 
         } catch (catchError) {
             if (catchError.message === "RATE_LIMIT_HIT") {
-                rotateGroqKey(); // Limit doldu, hemen sonraki anahtara geçiş yap
+                console.log(`🔄 [OTOMATİK TAKVİYE]: İndex ${currentKeyIndex} tamamen kilitlendi. Sonraki anahtara geçiliyor...`);
+                rotateGroqKey(); // Hemen havuzdaki bir sonraki anahtara geçiş yap
                 attempt++;
             } else {
                 console.error("Beklenmeyen siber rota hatası:", catchError.message);
@@ -163,6 +169,7 @@ app.post('/ask', async (req, res) => {
         }
     }
 
+    // Eğer tüm denemelere rağmen hiçbir anahtar çalışmadıysa mecbur havlu atıyoruz
     if (!success) {
         if (!res.writableEnded) {
             res.write("\n\n❌ Şuanda Sunucularımız Yoğun Daha Sonra Deneyiniz.");
@@ -171,7 +178,7 @@ app.post('/ask', async (req, res) => {
         return;
     }
 
-    // --- VERİ AKIŞI OKUMA ALANI ---
+    // --- VERİ AKIŞI OKUMA ALANI (STREAMING) ---
     try {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
