@@ -766,9 +766,12 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 /* AÇILIR EKRAN ARKA PLANI (MODAL OVERLAY) */
 .modal-overlay {
-    display: none; /* İlk başta gizli */
+    display: flex; /* display: none YERİNE FLEX YAPTIK Kİ EKRAN AÇIK KALSIN */
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
     z-index: 9999;
