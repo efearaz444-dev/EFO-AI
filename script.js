@@ -648,9 +648,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const desktopBtn = document.getElementById('downloadDesktopBtn');
     const appBtn = document.getElementById('downloadAppBtn');
     
-    // Güvenli modal seçici: Eğer projende .modal class'ı yoksa kod patlamaz
-    const downloadModal = document.querySelector('.modal') || document.querySelector('.download-modal'); 
-    
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
 
@@ -658,6 +655,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (userAgent.includes("WebInToApp") || window.location.href.includes("app=true")) {
         if (appBtn) appBtn.style.setProperty('display', 'none', 'important');
         if (desktopBtn) desktopBtn.style.setProperty('display', 'none', 'important');
+        
+        // Modal kontrolünü tamamen güvenli yapıyoruz, yoksa bile kod patlamaz
+        const downloadModal = document.querySelector('.modal') || document.querySelector('.download-modal');
         if (downloadModal) downloadModal.style.setProperty('display', 'none', 'important');
     } 
     // 2. Durum: Kullanıcı normal TELEFONDAN tarayıcıyla giriyorsa
