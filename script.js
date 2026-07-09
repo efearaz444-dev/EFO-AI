@@ -467,13 +467,14 @@ while (true) {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // --- BURADAN İTİBAREN DEĞİŞTİRİYORUZ REİS ---
-
-        // Efo yazmayı bitirdiği an otomatik olarak konuşmaya başlasın loriğim:
-        efoKonus(fullResponseText); 
+        // --- SADECE MİKROFONA BASILDIYSA SESLİ OKU, SONRA MODU SIFIRLA ---
+        if (sesliModAktif) {
+            efoKonus(fullResponseText);
+            sesliModAktif = false; // Konuşma tetiklendi, bir sonraki normal mesaj için sıfırladık
+        }
 
         // Döngü bittiğinde hafızaya kaydet ve ses butonunu çak:
-        conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText }); 
+        conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText });
 
         // Hafıza temizliği burada devreye giriyor loriğim:
         if (conversations[currentChatId].messages.length > 4) {
@@ -511,7 +512,11 @@ animate();
 let recognition;
 let isListening = false;
 
-// 1. MİKROFONU BAŞLATMA VE DİNLEME (STT)
+// --- EFO AI SESLİ SOHBET MOTORU (WEB SPEECH API) ---
+let recognition;
+let isListening = false;
+let sesliModAktif = false; // <-- YENİ EKLEDİĞİMİZ BAYRAK
+
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
@@ -521,6 +526,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
     recognition.onstart = () => {
         isListening = true;
+        sesliModAktif = true; // <-- Mikrofona basıldığı an sesli modu açtık!
         document.getElementById('micBtn').innerText = '🔴'; 
         document.getElementById('userInput').placeholder = 'Efo seni dinliyor... Konuşun...';
     };
@@ -533,6 +539,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     recognition.onerror = (event) => {
         console.error('Mikrofon hatası:', event.error);
         stopListening();
+        sesliModAktif = false; // Hata olursa sesli modu kapat
     };
 
     recognition.onend = () => {
@@ -565,14 +572,12 @@ function stopListening() {
 // 2. OTOMATİK SESLİ OKUMA FONKSİYONU (TTS)
 function efoKonus(metin) {
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // Varsa eski sesi kes
+        window.speechSynthesis.cancel(); 
 
-        // Markdown karakterlerini temizle ki "yıldız yıldız" diye okumasın
         let temizMetin = metin.replace(/[*#`_\-]/g, '').trim();
-
         const utterance = new SpeechSynthesisUtterance(temizMetin);
         utterance.lang = 'tr-TR'; 
-        utterance.rate = 1.1; // Hafif seri okusun
+        utterance.rate = 1.1; 
         utterance.pitch = 1.0; 
 
         const voices = window.speechSynthesis.getVoices();
