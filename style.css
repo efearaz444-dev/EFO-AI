@@ -750,12 +750,14 @@ input:checked + .slider:before { transform: translateX(18px); }
     background: linear-gradient(135deg, #a855f7, #6366f1);
     color: #fff;
     border: none;
-    padding: 10px 18px;
+    padding: 10px 14px; /* Sağ-sol boşluğu biraz esnettik */
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
     transition: all 0.3s ease;
+    white-space: nowrap; /* YAZININ ALT SATIRA BİNMESİNİ KESİNLİKLE ENGELLER */
+    text-align: center;  /* Yazıyı butonun tam ortasına jilet gibi hizalar */
 }
 .download-btn:hover {
     transform: translateY(-2px);

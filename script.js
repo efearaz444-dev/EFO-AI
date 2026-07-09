@@ -644,3 +644,26 @@ if (downloadMobile) {
         alert("📱 Efo AI Mobil Android Sürümü İndirliyor Lütfen Önce 'Hemen İndir' Butonuna Tıkladığınızdan Emin Olun, Ardından 'Tamam' butonuna tıklayın...");
     });
 }
+document.addEventListener("DOMContentLoaded", function() {
+    const desktopBtn = document.getElementById('downloadDesktopBtn');
+    const appBtn = document.getElementById('downloadAppBtn');
+    const userAgent = navigator.userAgent;
+
+    // 1. Durum: Eğer kullanıcı direkt Efo AI Mobil Uygulamasının İÇİNDEN giriyorsa indirmeleri komple kapat
+    if (userAgent.includes("WebInToApp") || window.location.href.includes("app=true")) {
+        if (appBtn) appBtn.style.display = 'none';
+        if (desktopBtn) desktopBtn.style.display = 'none';
+        
+        // Eğer indirme penceresinin (modal) komple kapanmasını istiyorsan (senin tasarımdaki class ismi neyse):
+        const downloadModal = document.querySelector('.modal');
+        if (downloadModal) downloadModal.style.display = 'none';
+    } 
+    // 2. Durum: Kullanıcı PC'den (Windows veya Mac) normal tarayıcıyla giriyorsa
+    else if (userAgent.includes("Windows") || userAgent.includes("Macintosh")) {
+        if (appBtn) appBtn.style.display = 'none'; // Mobil butonunu gizle, sadece PC kalsın
+    } 
+    // 3. Durum: Kullanıcı telefondan normal tarayıcıyla (Chrome/Safari) giriyorsa
+    else {
+        if (desktopBtn) desktopBtn.style.display = 'none'; // PC butonunu gizle, sadece Mobil kalsın
+    }
+});
