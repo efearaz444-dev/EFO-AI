@@ -102,9 +102,11 @@ app.post('/ask', async (req, res) => {
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile", // Önce ana model
                     messages: apiMessages,
-                    temperature: 0.2,
+                    temperature: 0.6,          // ⚠️ Döngüyü kırmak için biraz esneklik verdik
                     top_p: 0.9,
                     max_tokens: 4096, 
+                    frequency_penalty: 0.8,    // ⚠️ KRİTİK: Aynı kelimeleri/cümleleri peş peşe tekrarlamayı kesinlikle engeller
+                    presence_penalty: 0.6,     // ⚠️ KRİTİK: Robotun aynı lafın etrafında dönüp durmasını engeller
                     stream: true
                 })
             });
