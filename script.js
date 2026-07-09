@@ -634,43 +634,44 @@ window.addEventListener('click', (e) => {
 // PC İndirme Butonuna Basınca
 if (downloadPC) {
     downloadPC.addEventListener('click', () => {
-        alert("💻 Efo AI PC sürümü çok yakında burada olacak! Masaüstü entegrasyonu hazırlanıyor...");
+        alert("💻 Efo AI PC Uygulaması İndirliyor Lütfen Önce 'Hemen İndir' Butonuna Tıkladığınızdan Emin Olun, Ardından 'Tamam' butonuna tıklayın...");
     });
 }
 
 // Mobil İndirme Butonuna Basınca
 if (downloadMobile) {
     downloadMobile.addEventListener('click', () => {
-        alert("📱 Efo AI Mobil Android Sürümü İndirliyor Lütfen Önce 'Hemen İndir' Butonuna Tıkladığınızdan Emin Olun, Ardından 'Tamam' butonuna tıklayın...");
+        alert("📱 Efo AI Mobil Android Uygulaması İndirliyor Lütfen Önce 'Hemen İndir' Butonuna Tıkladığınızdan Emin Olun, Ardından 'Tamam' butonuna tıklayın...");
     });
 }
 document.addEventListener("DOMContentLoaded", function() {
-    const desktopBtn = document.getElementById('downloadDesktopBtn');
-    const appBtn = document.getElementById('downloadAppBtn');
+    // ─── ELEMANLARI HTML'E GÖRE SEÇİYORUZ ───
+    const openModalBtn = document.getElementById('downloadAppBtn'); // Ana buton
+    const modalOverlay = document.getElementById('downloadModal');  // Açılır pencere
+    const closeModalBtn = document.querySelector('.close-modal-btn'); // Kapatma (X) butonu
     
+    const desktopBtn = document.getElementById('downloadDesktopBtn'); // PC indirme linki
+    
+    // HTML'de iki tane 'downloadAppBtn' ID'si olduğu için mobil kartının içindeki linki garantili seçiyoruz
+    const mobileBtn = document.querySelector('#downloadMobile .download-btn'); 
+
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
 
-    // 1. Durum: Efo AI Mobil Uygulamasının KENDİ İÇİNDEN giriliyorsa her şeyi gizle
-    if (userAgent.includes("WebInToApp") || window.location.href.includes("app=true")) {
-        if (appBtn) appBtn.style.setProperty('display', 'none', 'important');
-        if (desktopBtn) desktopBtn.style.setProperty('display', 'none', 'important');
+    // ─── SİTE İLK AÇILDIĞINDA PENCEREYİ GİZLE ───
+    if (modalOverlay) {
+        modalOverlay.style.setProperty('display', 'none', 'important');
+    }
+
+    // ─── CİHAZA GÖRE İÇERİDEKİ BUTONLARI AYARLA ───
+    if (isMobile) {
+        if (desktopBtn) desktopBtn.style.setProperty('display', 'none', 'important'); // PC indirmeyi gizle
+        if (mobileBtn) mobileBtn.style.setProperty('display', 'inline-block', 'important'); // Mobil indirmeyi göster
+    } else {
+        if (mobileBtn) mobileBtn.style.setProperty('display', 'none', 'important'); // Mobil indirmeyi gizle
+        if (desktopBtn) desktopBtn.style.setProperty('display', 'inline-block', 'important'); // PC indirmeyi göster
         
-        // Modal kontrolünü tamamen güvenli yapıyoruz, yoksa bile kod patlamaz
-        const downloadModal = document.querySelector('.modal') || document.querySelector('.download-modal');
-        if (downloadModal) downloadModal.style.setProperty('display', 'none', 'important');
-    } 
-    // 2. Durum: Kullanıcı normal TELEFONDAN tarayıcıyla giriyorsa
-    else if (isMobile) {
-        if (desktopBtn) desktopBtn.style.setProperty('display', 'none', 'important'); // PC'yi gizle
-        if (appBtn) appBtn.style.setProperty('display', 'inline-block', 'important'); // Mobili zorla göster
-    } 
-    // 3. Durum: Kullanıcı PC'DEN normal tarayıcıyla giriyorsa
-    else {
-        if (appBtn) appBtn.style.setProperty('display', 'none', 'important'); // Mobili gizle
-        if (desktopBtn) desktopBtn.style.setProperty('display', 'inline-block', 'important'); // PC'yi zorla göster
-        
-        // 🖥️ PC İÇİN OTOMATİK TAM EKRAN PROTOKOLÜ
+        // 🖥️ PC İÇİN OTOMATİK TAM EKRAN PROTOKOLÜ (İlk tıklamada tetiklenir)
         document.addEventListener('click', function activateFullscreen() {
             const elem = document.documentElement;
             if (elem.requestFullscreen) elem.requestFullscreen();
@@ -678,5 +679,38 @@ document.addEventListener("DOMContentLoaded", function() {
             else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
             document.removeEventListener('click', activateFullscreen);
         }, { once: true });
+    }
+
+    // ─── ANA BUTONA TIKLAYINCA AÇILMA VE UYGULAMA İÇİ KONTROLÜ ───
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Eğer kullanıcı zaten mobil uygulamanın İÇİNDENSE pencerenin açılmasını tamamen engelle
+            if (userAgent.includes("WebInToApp") || window.location.href.includes("app=true")) {
+                return; // Sessizce engelle, ekran hiç açılmasın
+            }
+            
+            // Normal tarayıcıysa ekranı flex yaparak aslanlar gibi aç
+            if (modalOverlay) {
+                modalOverlay.style.setProperty('display', 'flex', 'important');
+            }
+        });
+    }
+
+    // ─── X BUTONUNA TIKLAYINCA PENCEREYİ KAPAT ───
+    if (closeModalBtn && modalOverlay) {
+        closeModalBtn.addEventListener('click', function() {
+            modalOverlay.style.setProperty('display', 'none', 'important');
+        });
+    }
+
+    // Pencerenin dışındaki boşluğa tıklayınca da kapansın
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                modalOverlay.style.setProperty('display', 'none', 'important');
+            }
+        });
     }
 });
