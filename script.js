@@ -596,6 +596,13 @@ function efoKonus(metin) {
     }
 }
 // --- EFO AI UYGULAMA İNDİRME EKRANI KONTROLLERİ ---
+// Cihaz kimliğini kontrol et: Eğer PC uygulamasından girildiyse indirme butonunu gizle!
+if (navigator.userAgent.includes("EfoAIPC-Desktop-App")) {
+    const downloadAppBtn = document.getElementById('downloadAppBtn');
+    if (downloadAppBtn) {
+        downloadAppBtn.style.display = 'none';
+    }
+}
 const downloadAppBtn = document.getElementById('downloadAppBtn');
 const downloadModal = document.getElementById('downloadModal');
 const closeModalBtn = document.querySelector('.close-modal-btn');
