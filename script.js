@@ -641,6 +641,6 @@ if (downloadPC) {
 // Mobil İndirme Butonuna Basınca
 if (downloadMobile) {
     downloadMobile.addEventListener('click', () => {
-        alert("📱 Efo AI Mobil Android (.apk) sürümü çok yakında burada olacak! Mobil kodlama hazırlanıyor...");
+        alert("📱 Efo AI Mobil Android Sürümü İndirliyor Lütfen Önce 'Hemen İndir' Butonuna Tıkladığınızdan Emin Olun, Ardından 'Tamam' butonuna tıklayın...");
     });
 }
