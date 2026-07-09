@@ -14,6 +14,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.6",
+    "duck-duck-scrape": "^2.2.7",
     "express": "^5.2.1"
   }
 }
