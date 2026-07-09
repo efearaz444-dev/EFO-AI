@@ -647,37 +647,38 @@ if (downloadMobile) {
 document.addEventListener("DOMContentLoaded", function() {
     const desktopBtn = document.getElementById('downloadDesktopBtn');
     const appBtn = document.getElementById('downloadAppBtn');
-    const userAgent = navigator.userAgent;
+    const downloadModal = document.querySelector('.modal'); // Eğer açılır pencerenin class adı farklıysa burayı kontrol edebilirsin reis
+    
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isMobileText = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
 
-    // 1. Durum: Eğer kullanıcı direkt Efo AI Mobil Uygulamasının İÇİNDEN giriyorsa indirmeleri komple kapat
+    // 1. Durum: Eğer kullanıcı Efo AI Mobil Uygulamasının KENDİ İÇİNDEN giriyorsa
     if (userAgent.includes("WebInToApp") || window.location.href.includes("app=true")) {
         if (appBtn) appBtn.style.display = 'none';
         if (desktopBtn) desktopBtn.style.display = 'none';
-        
-        const downloadModal = document.querySelector('.modal');
         if (downloadModal) downloadModal.style.display = 'none';
     } 
-    // 2. Durum: Kullanıcı PC'den (Windows veya Mac) normal tarayıcıyla giriyorsa
-    else if (userAgent.includes("Windows") || userAgent.includes("Macintosh")) {
-        if (appBtn) appBtn.style.display = 'none'; // Mobil butonunu gizle
+    // 2. Durum: Kullanıcı normal telefondan tarayıcıyla giriyorsa (Chrome/Safari vb.)
+    else if (isMobileText) {
+        if (desktopBtn) desktopBtn.style.display = 'none';  // PC butonunu gizle
+        if (appBtn) appBtn.style.display = 'inline-block'; // Mobil butonunu kesin olarak göster
+    } 
+    // 3. Durum: Kullanıcı PC'den normal tarayıcıyla giriyorsa
+    else {
+        if (appBtn) appBtn.style.display = 'none';          // Mobil butonunu gizle
+        if (desktopBtn) desktopBtn.style.display = 'inline-block'; // PC butonunu kesin olarak göster
         
         // 🖥️ PC İÇİN OTOMATİK TAM EKRAN PROTOKOLÜ
-        // Tarayıcı güvenlik politikaları gereği, kullanıcının sayfada ilk tıkladığı yerde tam ekranı tetikliyoruz
         document.addEventListener('click', function activateFullscreen() {
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) { /* Safari */
+            } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { /* IE11 */
+            } else if (elem.msRequestFullscreen) {
                 elem.msRequestFullscreen();
             }
-            // Bir kere tam ekran yaptıktan sonra bu dinleyiciyi kaldırıyoruz ki her tıklamada tetiklenmesin
             document.removeEventListener('click', activateFullscreen);
         }, { once: true });
-    } 
-    // 3. Durum: Kullanıcı telefondan normal tarayıcıyla giriyorsa
-    else {
-        if (desktopBtn) desktopBtn.style.display = 'none'; // PC butonunu gizle
     }
 });
