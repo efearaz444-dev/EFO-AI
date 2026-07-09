@@ -467,7 +467,14 @@ while (true) {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-// --- DEĞİŞTİRECEĞİN KISIM TAM BURASI LORİĞİM ---
+while (true) {
+            const { done, value } = await reader.read(); if (done) break;
+            fullResponseText += decoder.decode(value, { stream: true });
+            efoMessageDiv.innerHTML = marked.parse(fullResponseText);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- DEĞİŞTİRECEĞİN KISIM TAM BURASI LORİĞİM ---
         if (sesliModAktif) {
             efoKonus(fullResponseText);
             sesliModAktif = false; // Konuştu ve bir sonraki normal mesaj için sıfırlandı
