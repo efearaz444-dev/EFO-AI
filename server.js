@@ -66,7 +66,6 @@ app.post('/ask', async (req, res) => {
         filteredHistory = filteredHistory.slice(-4);
     }
 
-    // Filtrelenmiş sohbet geçmişini sırayla hafızaya ekliyoruz
     if (filteredHistory.length > 0) {
         filteredHistory.forEach(msg => {
             apiMessages.push({
@@ -76,26 +75,24 @@ app.post('/ask', async (req, res) => {
         });
     }
 
-    // En son kullanıcının yazdığı anlık yeni promptu ekliyoruz
     apiMessages.push({ role: "user", content: prompt });
 
     let attempt = 0;
-    let maxAttempts = groqApiKeys.length > 0 ? groqApiKeys.length : 5; // Kaç anahtar varsa o kadar denesin
+    let maxAttempts = groqApiKeys.length > 0 ? groqApiKeys.length : 5; 
     let success = false;
     let response;
 
+    // --- 1. AŞAMA: TÜM ANAHTARLARDA SIFIRIYLA EN GÜÇLÜ MODELİ (EFO+) DENEME ---
     while (attempt < maxAttempts && !success) {
         let currentApiKey = groqApiKeys.length > 0 ? groqApiKeys[currentKeyIndex] : process.env.GROQ_API_KEY;
 
         if (!currentApiKey) {
-            console.error("🚨 [KRİTİK HATA]: Sistemde aktif API anahtarı bulunamadı, sonraki deneniyor.");
             rotateGroqKey();
             attempt++;
             continue;
         }
 
         try {
-            // Önce şansımızı ana modelle (EFO+) deniyoruz
             response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -103,7 +100,7 @@ app.post('/ask', async (req, res) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
+                    model: "llama-3.3-70b-versatile", // Önce ana model
                     messages: apiMessages,
                     temperature: 0.2,
                     top_p: 0.9,
@@ -112,65 +109,71 @@ app.post('/ask', async (req, res) => {
                 })
             });
 
-            // Eğer ana model limitten dolayı patlarsa:
             if (!response.ok) {
                 const errText = await response.text();
-                
                 if (errText.includes('rate_limit_exceeded') || response.status === 429) {
-                    console.warn(`⚠️ [SİSTEM UYARISI]: Ana model sınırı aşıldı (Anahtar İndex: ${currentKeyIndex}). EFO-LİTE deneniyor.`);
-                    
-                    // Yedek model (EFO-LİTE) isteği fırlatıyoruz
-                    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${currentApiKey}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: "llama-3.1-8b-instant",
-                            messages: apiMessages,
-                            temperature: 0.2,
-                            top_p: 0.9,
-                            max_tokens: 4096, 
-                            stream: true
-                        })
-                    });
-
-                    // Eğer yedek model de limitten patlarsa, bu anahtar tamamen felç olmuştur. Hata fırlat ki catch bloğuna düşüp anahtar değiştirsin!
-                    if (!response.ok) {
-                        const backupErrText = await response.text();
-                        if (backupErrText.includes('rate_limit_exceeded') || response.status === 429) {
-                            throw new Error("RATE_LIMIT_HIT");
-                        } else {
-                            throw new Error(`Yedek Model Hatası: ${backupErrText}`);
-                        }
-                    }
+                    console.warn(`⚠️ [LİMİT]: Anahtar İndex ${currentKeyIndex} için EFO+ limiti doldu. Sonraki anahtara geçiliyor...`);
+                    rotateGroqKey(); // Limit dolduysa hemen sonraki anahtara geç
+                    attempt++;
+                    continue; // Döngüyü başa sar, yeni anahtarla tekrar EFO+ dene
                 } else {
                     throw new Error(`Groq API Hatası: ${errText}`);
                 }
             }
 
-            // Buraya gelebildiyse ya ana model ya da yedek model başarıyla cevap vermeye başlamıştır!
-            success = true; 
+            success = true; // İstek başarılıysa döngü kırılır
 
         } catch (catchError) {
-            if (catchError.message === "RATE_LIMIT_HIT") {
-                console.log(`🔄 [OTOMATİK TAKVİYE]: İndex ${currentKeyIndex} tamamen kilitlendi. Sonraki anahtara geçiliyor...`);
-                rotateGroqKey(); // Hemen havuzdaki bir sonraki anahtara geçiş yap
-                attempt++;
-            } else {
-                console.error("Beklenmeyen siber rota hatası:", catchError.message);
-                if (!res.writableEnded) {
-                    res.write("\n\n❌ Şuanda Sunucularımız Yoğun Daha Sonra Deneyiniz.");
-                    res.end();
+            console.error(`❌ İndex ${currentKeyIndex} hatası:`, catchError.message);
+            rotateGroqKey();
+            attempt++;
+        }
+    }
+
+    // --- 2. AŞAMA: EĞER TÜM ANAHTARLARIN EFO+ LİMİTİ BİTTİYSE, EN SON ÇARE EFO-LİTE ---
+    if (!success) {
+        console.warn("🚨 [KRİTİK DURUM]: Havuzdaki TÜM anahtarların EFO+ limiti tükendi! Son çare EFO-LİTE devreye alınıyor.");
+        
+        if (apiMessages.length <= 2) {
+            res.write(`⚡ **[EFO-LİTE]:** Tüm hatlar yoğun, geçici olarak hafif mod devrede.\n\n---\n\n`);
+        }
+
+        let backupAttempt = 0;
+        while (backupAttempt < maxAttempts && !success) {
+            let currentApiKey = groqApiKeys.length > 0 ? groqApiKeys[currentKeyIndex] : process.env.GROQ_API_KEY;
+            
+            try {
+                response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentApiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.1-8b-instant", // Yedek hafif model
+                        messages: apiMessages,
+                        temperature: 0.2,
+                        top_p: 0.9,
+                        max_tokens: 4096, 
+                        stream: true
+                    })
+                });
+
+                if (response.ok) {
+                    success = true;
+                } else {
+                    rotateGroqKey();
+                    backupAttempt++;
                 }
-                return;
+            } catch (e) {
+                rotateGroqKey();
+                backupAttempt++;
             }
         }
     }
 
-    // Eğer tüm denemelere rağmen hiçbir anahtar çalışmadıysa mecbur havlu atıyoruz
-    if (!success) {
+    // Eğer iki aşamada da hiçbir şekilde yanıt alınamadıysa havlu atıyoruz
+    if (!success || !response) {
         if (!res.writableEnded) {
             res.write("\n\n❌ Şuanda Sunucularımız Yoğun Daha Sonra Deneyiniz.");
             res.end();
