@@ -12,18 +12,39 @@ app.use(express.static(__dirname));
 
 console.log("2. Adım: Express middleware ayarları yapıldı.");
 
-// KENDİ GROQ API ANAHTARIN VE SİSTEM TALİMATLARIN AYNEN KORUNDU
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+// Aktif olan tüm anahtarları Render'dan çekiyoruz
+const groqApiKeys = [
+    process.env.GROQ_API_KEY_1,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3,
+    process.env.GROQ_API_KEY_4,
+    process.env.GROQ_API_KEY_5,
+    process.env.GROQ_API_KEY_6,
+    process.env.GROQ_API_KEY_7,
+    process.env.GROQ_API_KEY_8,
+    process.env.GROQ_API_KEY_9,
+    process.env.GROQ_API_KEY_10
+].filter(key => key && key.trim() !== ""); // Tamamen dolu olanları filtrele
+
+let currentKeyIndex = 0;
+
+// İstek rate limit yediğinde anahtarı döngüsel olarak bir sonrakiyle değiştiren fonksiyon
+function rotateGroqKey() {
+    if (groqApiKeys.length > 0) {
+        currentKeyIndex = (currentKeyIndex + 1) % groqApiKeys.length;
+        console.log(`⚡ [SİBER DEĞİŞİM]: Limit sınırına ulaşıldı, sonraki API anahtarına geçiliyor. Aktif İndex: ${currentKeyIndex}`);
+    }
+}
 
 const SYSTEM_PROMPT = `Senin adın Efo. Çok akıllı, iş bitirici, net ve hafif nüktedan bir siber asistan ve yazılımcı meslektaşsın. Kullanıcıyla iletişim kurarken kesinlikle yapmacık, aşırı duygusal veya yılışık ifadeler kullanmayacaksın. Karşılamaların samimi ama profesyonel, net ve özgüvenli olmalı. Gereksiz emoji kullanımından kaçın. Sorulara doğrudan, mantıklı ve temiz bir Markdown formatıyla (başlıklar, listeler, kod blokları) cevap ver.
 
 CRITICAL LANGUAGE ENFORCEMENT & STRICT RULES:
-1. DİL KESİNLİKLE TÜRKÇE OLACAKTIR: Yanıtlarının tek bir kelimesinde bile İngilizce, İspanyolca veya başka bir yabancı dil kelime, ek ya da devşirme terim ("específik", "excelente", "halo", "specific", "actually" vb.) YER ALAMAZ! Teknik kodlama terimleri hariç tüm konuşma metni %100 saf Türkçe olmak zorundadır.
+1. DİL KESİNLİKLE TÜRKÇE OLACAKTIR: Yanıtlarının tek bir kelimesinde bile İngilizce, İspanyolca veya başka bir yabancı dil kelime, ek ya da devşirme terim ("específik", "excelente", "halo", "specific", "actually" vb.) YER ALAMAZ! Teknik kodlama terimleri hariç tüm konuşma metni %100 saf Türkçe olmak zorundadır.
 2. Tüm cümlelerin kusursuz, akıcı ve kurallı bir Türkçe ile yazılmalıdır. Yazım hatalarından, harf uyuşmazlıklarından ve dil kaymalarından tamamen kaçın. Cümle ortasında yabancı dile geçiş yapmayı kesinlikle reddet.
 3. TÜRKÇE KARAKTER ZORUNLULUĞU: Kelimelerinde TÜM HARFLERİ EKSİKSİZ YAZ. (ç, ğ, ı, ö, ş, ü, G, Ş, İ, Ö, Ç, Ğ) gibi Türkçe özel harfleri her kelimede eksiksiz, doğru ve Türk Dil Kurumu (TDK) imla kurallarına tam uygun olarak kullan.
 4. Senden eğer ulaşım bilgilerimizi talep ederlerse, 'Discord üzerinden yapımcıma efearaz44 yazıp arkadaş ekleyerek ulaşabilirsiniz' tarzında yanıtlar verebilirsin.
 5. Seninle ilgili sorulara, "Ben Efo, bir yapay zekâ asistanıyım. Görevim kullanıcıya yardımcı olmak ve isteklerini yerine getirmektir." şeklinde cevap verebilirsin.
-6. Yapımcını Sorarlarsa; 'Yapımcım efearaz44, kendisi çok zeki profosyonel ve iş bitirici bir yazılımcıdır. Yapımcıma ulaşmak için discorddan efearaz44'e istek atabilir veya destek sunucumuza https://discord.gg/kDms9KJ9JK üzerinden ulaşabilirsiniz' cevabını verebilirsin.
+6. Yapımcını Sorarlaraf; 'Yapımcım efearaz44, kendisi çok zeki profosyonel ve iş bitirici bir yazılımcıdır. Yapımcıma ulaşmak için discorddan efearaz44'e istek atabilir veya destek sunucumuza https://discord.gg/kDms9KJ9JK üzerinden ulaşabilirsiniz' cevabını verebilirsin.
 7. Teknik terimler hariç, günlük konuşma dilindeki tüm kelimelerin Türk Dil Kurumu (TDK) imla kurallarına uygun olmalıdır.`;
 
 // AKILLI HAFIZA VE COOLDOWN ENTEGRELİ YENİ /ASK ROTASI
@@ -35,89 +56,123 @@ app.post('/ask', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    try {
-        // Groq API'ye göndereceğimiz mesaj paketini hazırlıyoruz
-        let apiMessages = [{ role: "system", content: SYSTEM_PROMPT }];
+    // Groq API'ye göndereceğimiz mesaj paketini hazırlıyoruz
+    let apiMessages = [{ role: "system", content: SYSTEM_PROMPT }];
 
-        // --- SİBER HAFIZA FİLTRESİ (TOKEN SAVAR) ---
-        // Gelen geçmiş mesaj sayısı 6'dan fazlaysa, kotayı korumak için sadece son 6 mesajı (3 soru - 3 cevap) alıyoruz
-        let filteredHistory = historyMessages || [];
-        if (filteredHistory.length > 4) {
-            console.log(`⚠️ [SİSTEM]: Geçmiş mesaj sayısı ${filteredHistory.length}. Son 6 mesaj filtrelenerek hafızaya alınıyor.`);
-            filteredHistory = filteredHistory.slice(-4);
-        }
+    // --- SİBER HAFIZA FİLTRESİ (TOKEN SAVAR) ---
+    let filteredHistory = historyMessages || [];
+    if (filteredHistory.length > 4) {
+        console.log(`⚠️ [SİTEM]: Geçmiş mesaj sayısı ${filteredHistory.length}. Son 4 mesaj filtrelenerek hafızaya alınıyor.`);
+        filteredHistory = filteredHistory.slice(-4);
+    }
 
-        // Filtrelenmiş sohbet geçmişini sırayla hafızaya ekliyoruz
-        if (filteredHistory.length > 0) {
-            filteredHistory.forEach(msg => {
-                apiMessages.push({
-                    role: msg.sender === 'user' ? 'user' : 'assistant',
-                    content: msg.text
-                });
+    // Filtrelenmiş sohbet geçmişini sırayla hafızaya ekliyoruz
+    if (filteredHistory.length > 0) {
+        filteredHistory.forEach(msg => {
+            apiMessages.push({
+                role: msg.sender === 'user' ? 'user' : 'assistant',
+                content: msg.text
             });
-        }
-
-        // En son kullanıcının yazdığı anlık yeni promptu ekliyoruz
-        apiMessages.push({ role: "user", content: prompt });
-
-let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: apiMessages,
-                temperature: 0.2,
-                top_p: 0.9,
-                max_tokens: 4096, 
-                stream: true
-            })
         });
+    }
 
-        // Üst limit kontrolü ve EFO-LİTE geçiş protokolü
-        if (!response.ok) {
-            const errText = await response.text();
-            
-             if (errText.includes('rate_limit_exceeded') || response.status === 429) {
-                console.warn("⚠️ [SİSTEM UYARISI]: Ana model sınırına ulaşıldı. EFO-LİTE devrede.");
-                
-                // Sadece sohbetin en başında (ilk mesajda) bildirim bas
-                // apiMessages dizisinin ilk iki elemanı [system, user] olduğu için 
-                // uzunluk 2 veya daha az ise bu bir başlangıç mesajıdır.
-                if (apiMessages.length <= 2) {
-                    res.write(`⚡ **[EFO-LİTE]:** EFO+ sınırına ulaşıldı. EFO-LİTE devrede.\n\n---\n\n`);
-                }
-                
-                // ... (Yedek model re-try mantığı buraya devam ediyor)
-                
-                // Yedek model (EFO-LİTE) ile yeni istek başlatılıyor
-                response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${GROQ_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.1-8b-instant", // EFO-LİTE Modeli
-                        messages: apiMessages,
-                        temperature: 0.2,
-                        top_p: 0.9,
-                        max_tokens: 4096, 
-                        stream: true
-                    })
-                });
+    // En son kullanıcının yazdığı anlık yeni promptu ekliyoruz
+    apiMessages.push({ role: "user", content: prompt });
 
-                if (!response.ok) {
-                    const backupErrText = await response.text();
-                    throw new Error(`Yedek Model (EFO-LİTE) Hatası: ${backupErrText}`);
+    let attempt = 0;
+    let maxAttempts = 5; // Limite takılırsa ardışık en fazla 5 farklı anahtarla denesin
+    let success = false;
+    let response;
+
+    while (attempt < maxAttempts && !success) {
+        let currentApiKey = groqApiKeys[currentKeyIndex] || process.env.GROQ_API_KEY;
+
+        try {
+            response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${currentApiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: apiMessages,
+                    temperature: 0.2,
+                    top_p: 0.9,
+                    max_tokens: 4096, 
+                    stream: true
+                })
+            });
+
+            // Eğer ana model rate limit yediyse yedek modele (EFO-LİTE) geçmeye çalış
+            if (!response.ok) {
+                const errText = await response.text();
+                
+                if (errText.includes('rate_limit_exceeded') || response.status === 429) {
+                    console.warn(`⚠️ [SİSTEM UYARISI]: Ana model sınırı aşıldı (Anahtar İndex: ${currentKeyIndex}). EFO-LİTE deneniyor.`);
+                    
+                    if (apiMessages.length <= 2) {
+                        res.write(`⚡ **[EFO-LİTE]:** EFO+ sınırına ulaşıldı. EFO-LİTE devrede.\n\n---\n\n`);
+                    }
+                    
+                    // Yedek model (EFO-LİTE) isteği
+                    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentApiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: "llama-3.1-8b-instant", // EFO-LİTE Modeli
+                            messages: apiMessages,
+                            temperature: 0.2,
+                            top_p: 0.9,
+                            max_tokens: 4096, 
+                            stream: true
+                        })
+                    });
+
+                    // Eğer yedek model de rate limit yediyse hatayı fırlat ki catch bloğu anahtarı değiştirip while döngüsünü döndürsün
+                    if (!response.ok) {
+                        const backupErrText = await response.text();
+                        if (backupErrText.includes('rate_limit_exceeded') || response.status === 429) {
+                            throw new Error("RATE_LIMIT_HIT");
+                        } else {
+                            throw new Error(`Yedek Model Hatası: ${backupErrText}`);
+                        }
+                    }
+                } else {
+                    throw new Error(`Groq API Hatası: ${errText}`);
                 }
+            }
+
+            success = true; // İstek başarılıysa döngüyü kır
+
+        } catch (catchError) {
+            if (catchError.message === "RATE_LIMIT_HIT") {
+                rotateGroqKey(); // Limit doldu, hemen sonraki anahtara geçiş yap
+                attempt++;
             } else {
-                throw new Error(`Groq API Hatası: ${errText}`);
+                console.error("Beklenmeyen siber rota hatası:", catchError.message);
+                if (!res.writableEnded) {
+                    res.write("\n\n❌ Şuanda Sunucularımız Yoğun Daha Sonra Deneyiniz.");
+                    res.end();
+                }
+                return;
             }
         }
+    }
 
+    if (!success) {
+        if (!res.writableEnded) {
+            res.write("\n\n❌ Şuanda Sunucularımız Yoğun Daha Sonra Deneyiniz.");
+            res.end();
+        }
+        return;
+    }
+
+    // --- VERİ AKIŞI OKUMA ALANI ---
+    try {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = ""; 
@@ -146,7 +201,7 @@ let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                         res.write(content);
                     }
                 } catch (e) {
-                    // Bozuk JSON paketleri yutuluyor
+                    // Bozuk veri paketlerini yutuyoruz
                 }
             }
         }
@@ -166,10 +221,9 @@ let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         
         res.end();
 
-    } catch (error) {
-        console.error("Yayın akışında hata:", error);
+    } catch (streamError) {
+        console.error("Yayın akışı okuma hatası:", streamError);
         if (!res.writableEnded) {
-            res.write("\n\n❌ Şuanda Sunucularımız Yoğun Daha Sonra Deneyiniz.");
             res.end();
         }
     }
@@ -180,31 +234,52 @@ app.post('/generate-title', async (req, res) => {
     console.log("/generate-title rotasına istek geldi.");
     const { prompt } = req.body;
 
-    try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { role: "system", content: "Sen bir başlık oluşturucusun. Kullanıcının yazacağı isteme göre en fazla 2-3 kelimelik, başında emoji olan siber/teknolojik bir sohbet başlığı üret. Sadece başlığı döndür, başka hiçbir şey yazma." },
-                    { role: "user", content: prompt }
-                ],
-                temperature: 0.2,
-                top_p: 0.9,
-            })
-        });
+    let attempt = 0;
+    let maxAttempts = 3;
+    let success = false;
+    let title = "🤖 Yeni Sohbet";
 
-        const data = await response.json();
-        const title = data.choices[0]?.message?.content?.trim() || "🤖 Yeni Sohbet";
-        res.json({ title });
+    while (attempt < maxAttempts && !success) {
+        let currentApiKey = groqApiKeys[currentKeyIndex] || process.env.GROQ_API_KEY;
 
-    } catch (error) {
-        res.json({ title: "🤖 Yeni Sohbet" });
+        try {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${currentApiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { role: "system", content: "Sen bir başlık oluşturucusun. Kullanıcının yazacağı isteme göre en fazla 2-3 kelimelik, başında emoji olan siber/teknolojik bir sohbet başlığı üret. Sadece başlığı döndür, başka hiçbir şey yazma." },
+                        { role: "user", content: prompt }
+                    ],
+                    temperature: 0.2,
+                    top_p: 0.9,
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                if (errText.includes('rate_limit_exceeded') || response.status === 429) {
+                    rotateGroqKey();
+                    attempt++;
+                    continue;
+                }
+                throw new Error("Başlık API hatası");
+            }
+
+            const data = await response.json();
+            title = data.choices[0]?.message?.content?.trim() || "🤖 Yeni Sohbet";
+            success = true;
+
+        } catch (error) {
+            attempt++;
+        }
     }
+
+    res.json({ title });
 });
 
 // SOHBET SİLME SERVİSİ
