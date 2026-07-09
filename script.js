@@ -595,3 +595,44 @@ function efoKonus(metin) {
         window.speechSynthesis.speak(utterance);
     }
 }
+// --- EFO AI UYGULAMA İNDİRME EKRANI KONTROLLERİ ---
+const downloadAppBtn = document.getElementById('downloadAppBtn');
+const downloadModal = document.getElementById('downloadModal');
+const closeModalBtn = document.querySelector('.close-modal-btn');
+const downloadPC = document.getElementById('downloadPC');
+const downloadMobile = document.getElementById('downloadMobile');
+
+// "Uygulamayı İndir" butonuna basınca ekranı aç
+if (downloadAppBtn) {
+    downloadAppBtn.addEventListener('click', () => {
+        downloadModal.style.display = 'flex';
+    });
+}
+
+// Çarpı (X) butonuna basınca ekranı kapat
+if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', () => {
+        downloadModal.style.display = 'none';
+    });
+}
+
+// Ekranın dışındaki boşluğa basınca da kapansın (Parantez Hatası Düzeltildi Reis!)
+window.addEventListener('click', (e) => {
+    if (e.target === downloadModal) {
+        downloadModal.style.display = 'none';
+    }
+}); // <-- Eksik olan }; buraya jilet gibi eklendi
+
+// PC İndirme Butonuna Basınca
+if (downloadPC) {
+    downloadPC.addEventListener('click', () => {
+        alert("💻 Efo AI PC sürümü çok yakında burada olacak! Masaüstü entegrasyonu hazırlanıyor...");
+    });
+}
+
+// Mobil İndirme Butonuna Basınca
+if (downloadMobile) {
+    downloadMobile.addEventListener('click', () => {
+        alert("📱 Efo AI Mobil Android (.apk) sürümü çok yakında burada olacak! Mobil kodlama hazırlanıyor...");
+    });
+}
