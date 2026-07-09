@@ -654,16 +654,30 @@ document.addEventListener("DOMContentLoaded", function() {
         if (appBtn) appBtn.style.display = 'none';
         if (desktopBtn) desktopBtn.style.display = 'none';
         
-        // Eğer indirme penceresinin (modal) komple kapanmasını istiyorsan (senin tasarımdaki class ismi neyse):
         const downloadModal = document.querySelector('.modal');
         if (downloadModal) downloadModal.style.display = 'none';
     } 
     // 2. Durum: Kullanıcı PC'den (Windows veya Mac) normal tarayıcıyla giriyorsa
     else if (userAgent.includes("Windows") || userAgent.includes("Macintosh")) {
-        if (appBtn) appBtn.style.display = 'none'; // Mobil butonunu gizle, sadece PC kalsın
+        if (appBtn) appBtn.style.display = 'none'; // Mobil butonunu gizle
+        
+        // 🖥️ PC İÇİN OTOMATİK TAM EKRAN PROTOKOLÜ
+        // Tarayıcı güvenlik politikaları gereği, kullanıcının sayfada ilk tıkladığı yerde tam ekranı tetikliyoruz
+        document.addEventListener('click', function activateFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+            // Bir kere tam ekran yaptıktan sonra bu dinleyiciyi kaldırıyoruz ki her tıklamada tetiklenmesin
+            document.removeEventListener('click', activateFullscreen);
+        }, { once: true });
     } 
-    // 3. Durum: Kullanıcı telefondan normal tarayıcıyla (Chrome/Safari) giriyorsa
+    // 3. Durum: Kullanıcı telefondan normal tarayıcıyla giriyorsa
     else {
-        if (desktopBtn) desktopBtn.style.display = 'none'; // PC butonunu gizle, sadece Mobil kalsın
+        if (desktopBtn) desktopBtn.style.display = 'none'; // PC butonunu gizle
     }
 });
