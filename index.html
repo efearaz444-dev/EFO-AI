@@ -94,11 +94,14 @@
     </div>
 </div>
                 
-                <div class="chat-input-area">
-                    <button class="image-gen-shortcut" onclick="triggerImagePrompt()" title="Yapay Zeka ile Görsel Oluştur">🎨</button>
-                    <input type="text" id="userInput" placeholder="Efo'ya bir şeyler söyle, belki bir kuş çizimi..." onkeypress="handleKeyPress(event)">
-                    <button id="sendBtn" onclick="sendMessage()">GÖNDER</button>
-                </div>
+<div class="chat-input-area">
+    <button class="image-gen-shortcut" onclick="triggerImagePrompt()" title="Yapay Zeka ile Görsel Oluştur">🎨</button>
+    <!-- MİKROFON BUTONU EKLEDİK -->
+    <button id="micBtn" onclick="toggleMic()" title="Sesli Konuş" style="background: none; border: none; font-size: 18px; cursor: pointer; padding: 10px;">🎙️</button>
+    
+    <input type="text" id="userInput" placeholder="Efo'ya bir şeyler söyle, belki bir kuş çizimi..." onkeypress="handleKeyPress(event)">
+    <button id="sendBtn" onclick="sendMessage()">GÖNDER</button>
+</div>
             </div>
         </div>
 
