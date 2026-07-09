@@ -467,13 +467,15 @@ while (true) {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // --- BURADAN İTİBAREN DEĞİŞTİRİYORUZ REİS ---
-
-        // Efo yazmayı bitirdiği an otomatik olarak konuşmaya başlasın loriğim:
-        efoKonus(fullResponseText); 
+// --- DEĞİŞTİRECEĞİN KISIM TAM BURASI LORİĞİM ---
+        if (sesliModAktif) {
+            efoKonus(fullResponseText);
+            sesliModAktif = false; // Konuştu ve bir sonraki normal mesaj için sıfırlandı
+        }
+        // ----------------------------------------------
 
         // Döngü bittiğinde hafızaya kaydet ve ses butonunu çak:
-        conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText }); 
+        conversations[currentChatId].messages.push({ sender: 'efo', text: fullResponseText });
 
         // Hafıza temizliği burada devreye giriyor loriğim:
         if (conversations[currentChatId].messages.length > 4) {
@@ -506,36 +508,39 @@ class Particle {
 function initParticles() { particles = []; let count = Math.floor((canvas.width * canvas.height) / 9000); for(let i=0; i<count; i++) particles.push(new Particle()); }
 initParticles();
 function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); }
-animate();
-// --- EFO AI SESLİ SOHBET MOTORU (WEB SPEECH API) ---
-let recognition;
-let isListening = false;
+animate(); // Sitenin mevcut animate satırı burada kalacak loriğim, altını silip bunu yapıştır:
 
-// 1. MİKROFONU BAŞLATMA VE DİNLEME (STT)
+// --- EFO AI SESLİ SOHBET MOTORU (WEB SPEECH API - GÜNCEL) ---
+let efoRecognition; // Çakışma olmasın diye ismini efoRecognition yaptık!
+let isListening = false;
+let sesliModAktif = false; // Normal yazınca sussun, mikrofona basınca konuşsun diye bayrağımız
+
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = false; 
-    recognition.lang = 'tr-TR'; 
-    recognition.interimResults = false;
+    efoRecognition = new SpeechRecognition();
+    efoRecognition.continuous = false; 
+    efoRecognition.lang = 'tr-TR'; 
+    efoRecognition.interimResults = false;
 
-    recognition.onstart = () => {
+    efoRecognition.onstart = () => {
         isListening = true;
+        sesliModAktif = true; // Mikrofondan tetiklendiği için sesli modu açtık
         document.getElementById('micBtn').innerText = '🔴'; 
         document.getElementById('userInput').placeholder = 'Efo seni dinliyor... Konuşun...';
     };
 
-    recognition.onresult = (event) => {
+    efoRecognition.onresult = (event) => {
         const textResult = event.results[0][0].transcript;
         document.getElementById('userInput').value = textResult; 
     };
 
-    recognition.onerror = (event) => {
+    efoRecognition.onerror = (event) => {
         console.error('Mikrofon hatası:', event.error);
         stopListening();
+        sesliModAktif = false;
     };
 
-    recognition.onend = () => {
+    efoRecognition.onend = () => {
         stopListening();
         if(document.getElementById('userInput').value.trim() !== "") {
             sendMessage();
@@ -550,9 +555,9 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
 function toggleMic() {
     if (!isListening) {
-        recognition.start();
+        efoRecognition.start();
     } else {
-        recognition.stop();
+        efoRecognition.stop();
     }
 }
 
@@ -567,7 +572,6 @@ function efoKonus(metin) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel(); // Varsa eski sesi kes
 
-        // Markdown karakterlerini temizle ki "yıldız yıldız" diye okumasın
         let temizMetin = metin.replace(/[*#`_\-]/g, '').trim();
 
         const utterance = new SpeechSynthesisUtterance(temizMetin);
