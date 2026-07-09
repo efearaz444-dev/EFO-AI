@@ -92,8 +92,21 @@ app.post('/ask', async (req, res) => {
             continue;
         }
 
-        try {
-            response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+try {
+            // ─── SİBER TALİMAT ENJEKSİYONU ───
+            // apiMessages dizisinin en başına karakter kurallarını ekliyoruz
+             if (Array.isArray(apiMessages)) {
+                const hasSystemPrompt = apiMessages.some(msg => msg.role === "system");
+                if (!hasSystemPrompt) {
+                    apiMessages.unshift({ 
+                        role: "system", 
+                        content: "Sen Efo AI adında, dünyadaki her konuda uzman, ultra zeki ve genel kültürü muazzam bir siber asistansın. Tarihten siber güvenliğe, popüler kütürden kedi maması markalarına, yazılımdan günlük hayata kadar HER KONUDA eksiksiz ve derinlemesine bilgiye sahipsin. Eğer güncel bir bilgi gerekirse veya emin olamadığın bir detay olursa, siber hafızandan ve internet verilerinden en doğru, en taze bilgiyi çekip kullanırsın. Kelime ve cümle tekrarlarına asla girmeden; net, öz, rasyonel ve jilet gibi keskin cevaplar verirsin." 
+                    });
+                }
+            }
+
+            // ─── GROQ API İSTEĞİ ───
+              response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${currentApiKey}`,
@@ -102,11 +115,11 @@ app.post('/ask', async (req, res) => {
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile", // Önce ana model
                     messages: apiMessages,
-                    temperature: 0.6,          // ⚠️ Döngüyü kırmak için biraz esneklik verdik
+                    temperature: 0.6,          // Döngüyü kıran esneklik derecesi
                     top_p: 0.9,
                     max_tokens: 4096, 
-                    frequency_penalty: 0.8,    // ⚠️ KRİTİK: Aynı kelimeleri/cümleleri peş peşe tekrarlamayı kesinlikle engeller
-                    presence_penalty: 0.6,     // ⚠️ KRİTİK: Robotun aynı lafın etrafında dönüp durmasını engeller
+                    frequency_penalty: 0.8,    // Tekrarları engelleyen siber fren
+                    presence_penalty: 0.6,     // Robotu hep yeni kelimeler yazmaya zorlayan ayar
                     stream: true
                 })
             });
